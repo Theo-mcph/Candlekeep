@@ -10,6 +10,7 @@ multidict==6.7.1
 propcache==0.5.2
 py-cord==2.8.0
 pycparser==3.0
+pydub==0.25.1
 PyNaCl==1.6.2
 python-dotenv==1.2.2
 ruff==0.15.21
