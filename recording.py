@@ -1,125 +1,148 @@
-import functools
-import io
 import os
-
-import pydub  # pip install pydub==0.25.1
-
 import discord
-from discord.sinks import MP3Sink
+from discord.ext import commands
 from dotenv import load_dotenv
+import pydub
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
+# Paste your target Discord Server ID here to sync slash commands instantly
+TEST_GUILD_ID = 1525169954276638930 
 
-bot = discord.Bot()
+if not TOKEN:
+    raise ValueError("DISCORD_TOKEN not found in your .env file")
 
+# Setup explicitly typed intents
+intents = discord.Intents.default()
+intents.voice_states = True
+intents.members = True
+intents.message_content = True
+
+bot = commands.Bot(
+    command_prefix="!", 
+    intents=intents,
+    debug_guilds=[TEST_GUILD_ID] if TEST_GUILD_ID != 1525169954276638930 else None
+)
+
+active_recordings = {}
+
+# Ensure native audio codec structures are explicitly ready
+if not discord.opus.is_loaded():
+    try:
+        discord.opus._load_default()
+    except Exception as e:
+        print(f"Warning: Failed to load default Opus codec: {e}")
+
+async def process_finished_recording(sink, *args):
+    """
+    Callback fired instantly when the recording stops.
+    Converts and flushes the user tracks out of memory down to the machine.
+    """
+    print("Recording stopped. Exporting audio files...")
+    
+    raw_channel = args[0] if args else None
+    
+    # 1. Strict Type Guard: Check if the channel is a TextChannel
+    if not isinstance(raw_channel, discord.TextChannel):
+        print("Callback aborting: Target channel context is not a standard TextChannel.")
+        return
+
+    # 2. Type Assertion: Creates an explicit reference so the linter knows it cannot be a ForumChannel
+    text_channel: discord.TextChannel = raw_channel
+
+    if not sink.audio_data:
+        await text_channel.send("⚠️ Recording ended, but no audio data was captured. Did anyone speak?")
+        return
+
+    user_mentions = []
+    output_dir = "./recorded_tracks"
+    os.makedirs(output_dir, exist_ok=True)
+
+    for user_id, audio_file in sink.audio_data.items():
+        user_mentions.append(f"<@{user_id}>")
+        
+        audio_file.file.seek(0)
+        raw_pcm_data = audio_file.file.read()
+        
+        # Structure the binary stream into a clean WAV container
+        audio_segment = pydub.AudioSegment(
+            data=raw_pcm_data,
+            sample_width=2,      # 16-bit audio
+            frame_rate=48000,    # Discord standard frequency
+            channels=2           # Pycord decodes natively into stereo channels
+        )
+        
+        local_filepath = os.path.join(output_dir, f"{user_id}.wav")
+        audio_segment.export(local_filepath, format="wav")
+        print(f"File written successfully: {local_filepath}")
+
+    await text_channel.send(f"Recorded separate tracks for: {', '.join(user_mentions)}. Check `{output_dir}/` folder.")
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
+    print(f"Bot is online and ready under account: {bot.user}")
 
-
-async def finished_callback(error: Exception | None, sink: MP3Sink, channel: discord.TextChannel):
-    if error:
-        print(f"Recording error: {error}")
-        return
-
-    mention_strs = []
-    audio_segs: list[pydub.AudioSegment] = []
-    files: list[discord.File] = []
-    longest = pydub.AudioSegment.empty()
-
-    for user_id, audio in sink.audio_data.items():
-        mention_strs.append(f"<@{user_id}>")
-        seg = pydub.AudioSegment.from_file(audio.file, format="mp3")
-        # Determine the longest audio segment
-        if len(seg) > len(longest):
-            audio_segs.append(longest)
-            longest = seg
-        else:
-            audio_segs.append(seg)
-        audio.file.seek(0)
-        files.append(discord.File(audio.file, filename=f"{user_id}.mp3"))
-
-    for seg in audio_segs:
-        longest = longest.overlay(seg)
-
-    with io.BytesIO() as f:
-        longest.export(f, format="mp3", parameters=["-f", "mp3"])
-        f.seek(0)
-        await channel.send(
-            f"Finished! Recorded audio for {', '.join(mention_strs)}.",
-            files=files + [discord.File(f, filename="recording.mp3")],
-        )
-
-
-@bot.command()
+@bot.slash_command(name="join", description="Bring the bot into your voice channel")
 async def join(ctx: discord.ApplicationContext):
-    """Candlekeep joins the voice channel!"""
     if not isinstance(ctx.author, discord.Member):
-        return await ctx.respond("This command only works in a server.")
+        return await ctx.respond("This command can only be used in a server channel!")
 
-    voice = ctx.author.voice
-    if not voice or not voice.channel:
-        return await ctx.respond("You're not in a vc right now")
-
+    if not ctx.author.voice or not ctx.author.voice.channel:
+        return await ctx.respond("You must join a Voice Channel first!")
+    
+    # Defer to prevent the command response from getting stuck loading
     await ctx.defer()
-    await voice.channel.connect()
-    await ctx.respond("Joined!")
+    await ctx.author.voice.channel.connect()
+    await ctx.followup.send("Joined voice channel!")
 
-
-@bot.command()
+@bot.slash_command(name="start", description="Begin multi-track voice logging")
 async def start(ctx: discord.ApplicationContext):
-    """Record the voice channel!"""
-    if not isinstance(ctx.author, discord.Member):
-        return await ctx.respond("This command only works in a server.")
+    if not isinstance(ctx.author, discord.Member) or not ctx.guild:
+        return await ctx.respond("This command can only be used in a server channel!")
 
-    voice = ctx.author.voice
-    if not voice or not voice.channel:
-        return await ctx.respond("You're not in a vc right now")
+    voice_client = ctx.guild.voice_client
+    if not voice_client:
+        if not ctx.author.voice or not ctx.author.voice.channel:
+            return await ctx.respond("You must join a Voice Channel first!")
+        voice_client = await ctx.author.voice.channel.connect()
+        
+    if ctx.guild.id in active_recordings:
+        return await ctx.respond("Already capturing audio in this server!")
 
-    vc = ctx.voice_client
-    if not vc:
-        return await ctx.respond(
-            "I'm not in a vc right now. Use `/join` to make me join!"
-        )
-
-    if not isinstance(ctx.channel, discord.TextChannel):
-        return await ctx.respond("This command only works in a regular text channel")
-
-    await ctx.defer()
-
-    sink = MP3Sink()
-    vc.start_recording(
+    await ctx.respond("Recording initialized! Speak naturally.")
+    
+    sink = discord.sinks.WaveSink()
+    voice_client.start_recording(
         sink,
-        functools.partial(finished_callback, sink=sink, channel=ctx.channel),
+        process_finished_recording,
+        ctx.channel
     )
+    active_recordings[ctx.guild.id] = sink
 
-    await ctx.respond("The recording has started!")
-
-
-@bot.command()
+@bot.slash_command(name="stop", description="Halt recording and save tracks")
 async def stop(ctx: discord.ApplicationContext):
-    """Stop the recording"""
-    vc = ctx.voice_client
-    if not vc:
-        return await ctx.respond("There's no recording going on right now")
+    if not ctx.guild:
+        return await ctx.respond("This command can only be used in a server channel!")
 
-    vc.stop_recording()
+    voice_client = ctx.guild.voice_client
+    if not voice_client or ctx.guild.id not in active_recordings:
+        return await ctx.respond("No active recording session found.")
 
-    await ctx.respond("The recording has stopped!")
+    await ctx.respond("Processing files...")
+    active_recordings.pop(ctx.guild.id, None)
+    voice_client.stop_recording()
 
-
-@bot.command()
+@bot.slash_command(name="leave", description="Exit the voice channel")
 async def leave(ctx: discord.ApplicationContext):
-    """Leave the voice channel!"""
-    vc = ctx.voice_client
-    if not vc:
-        return await ctx.respond("I'm not in a vc right now")
+    if not ctx.guild:
+        return await ctx.respond("This command can only be used in a server channel!")
 
-    await vc.disconnect()
-
-    await ctx.respond("Left!")
-
+    voice_client = ctx.guild.voice_client
+    if voice_client:
+        active_recordings.pop(ctx.guild.id, None)
+        await voice_client.disconnect()
+        await ctx.respond("Left voice channel.")
+    else:
+        await ctx.respond("I'm not in a voice channel.")
 
 bot.run(TOKEN)
