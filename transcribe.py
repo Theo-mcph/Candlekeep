@@ -30,14 +30,22 @@ def run_transcription_pipeline():
                                      "speaker": speaker_id,
                                      "text":segment.text.strip()
                                      })
+    
 
+            all_segments.sort(key=lambda item: item['start'])
 
+            output_file = os.path.join(audio_dir,"transcript.txt")
 
+            with open(output_file, "w", encoding="utf-8") as f:
+                for seg in all_segments:
+    
+                    minutes, seconds = divmod(int(seg["start"]), 60) 
+                   
+                    timestamp = f"[{minutes:02d}:{seconds:02d}]"
 
-
-
-
-
+                    line = f"{timestamp} {seg['speaker']}: {seg['text']}"
+            
+                    f.write(line + "\n")
 
 
 
