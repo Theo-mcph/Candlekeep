@@ -10,7 +10,7 @@ def run_transcription_pipeline():
     model = WhisperModel(model_size, device="cuda", compute_type="float16")
     all_segments = []
 
-    audio_dir = "./workspace/projects/Candlekeep/recordings/test_session"
+    audio_dir = "./workspace/projects/Candlekeep/recordings/test_session/"
 
     if not os.path.exists(audio_dir):
         os.makedirs(audio_dir, exist_ok = True)
