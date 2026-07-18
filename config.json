@@ -1,0 +1,20 @@
+{
+    "input_dir":"./recordings/test_session",
+    "output_dir":"./recordings/test_session",
+    "output_file_name":"Masks session 23",
+    "language":"en",
+    "model_size":"base",
+    "device":"cuda",
+    "initial_prompt":"This is a Dungeons & Dragons session with fantasy names, spells, and game terminology.",
+    "beam_size":5,
+    "speaker_mapping":{
+
+        "Topoiso":"Fabrica",
+        "Ghost2309":"Cypher",
+        "Cloud9":"Ragnorok",
+        "Athierus":"Duskweaver",
+        "warren":"DM"
+
+    }
+
+}

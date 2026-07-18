@@ -1,5 +1,7 @@
 import os
+import json
 from faster_whisper import WhisperModel
+from pathlib import Path
 
 def run_transcription_pipeline():
 
@@ -10,42 +12,49 @@ def run_transcription_pipeline():
     model = WhisperModel(model_size, device="cuda", compute_type="float16")
     all_segments = []
 
-    audio_dir = "./workspace/projects/Candlekeep/recordings/test_session/"
+    audio_dir =Path("./recordings/test_session/")
 
-    if not os.path.exists(audio_dir):
+    if not audio_dir.is_dir():
         os.makedirs(audio_dir, exist_ok = True)
         print("folder not found creating new folder. Please place files in audio_dir directory")
 
-    for file in os.listdir(audio_dir):
-        if ".flac" in file or ".wav" in file:
-            speaker_id = os.path.splitext(file)[0]
-       
-            file_path = os.path.join(audio_dir, file)
-            print(f"Transcribing {file_path} on your 3060 Ti...")
 
-            segments ,info = model.transcribe(audio = file_path,language="en",)
+    for file in audio_dir.iterdir():
+        if file.suffix == ".flac" or file.suffix == ".wav":
+
+            speaker_id = file.stem.split("-", 1)[1]
+            
+    
+            print(f"Transcribing {file} on your 3060 Ti...")
+
+            segments ,info = model.transcribe(audio = str(file),language="en",)
 
             for segment in segments:
                 all_segments.append({"start": segment.start,
-                                     "speaker": speaker_id,
-                                     "text":segment.text.strip()
-                                     })
-    
+                                    "speaker": speaker_id,
+                                    "text":segment.text.strip()
+                                    })
 
-            all_segments.sort(key=lambda item: item['start'])
 
-            output_file = os.path.join(audio_dir,"transcript.txt")
+    if not all_segments:
+            print("No audio files were found to transcribe.")
+            return
 
-            with open(output_file, "w", encoding="utf-8") as f:
-                for seg in all_segments:
-    
-                    minutes, seconds = divmod(int(seg["start"]), 60) 
-                   
-                    timestamp = f"[{minutes:02d}:{seconds:02d}]"
 
-                    line = f"{timestamp} {seg['speaker']}: {seg['text']}"
+    all_segments.sort(key=lambda item: item['start'])
+
+    output_file = os.path.join(audio_dir,"transcript.txt")
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        for seg in all_segments:
+
+            minutes, seconds = divmod(int(seg["start"]), 60) 
             
-                    f.write(line + "\n")
+            timestamp = f"[{minutes:02d}:{seconds:02d}]"
+
+            line = f"{timestamp} {seg['speaker']}: {seg['text']}"
+
+            f.write(line + "\n")
 
 
 
