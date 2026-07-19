@@ -1,6 +1,6 @@
 {
     "input_dir":"./recordings/test_session",
-    "output_dir":"./recordings/test_session",
+    "output_dir":"./transcripts",
     "output_file_name":"Masks session 23",
     "language":"en",
     "model_size":"base",
