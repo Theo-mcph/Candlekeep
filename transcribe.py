@@ -38,8 +38,17 @@ def run_transcription_pipeline(config):
     
             print(f"Transcribing {file} on your 3060 Ti...")
 
-            segments ,info = model.transcribe(audio = str(file),language=config["language"],)
+            segments, info = model.transcribe(
+                                                audio=str(file),
+                                                language=config["language"],
+                                                initial_prompt=initial_prompt,
+                                                beam_size=config["beam_size"],
+                                                vad_filter=True,
+                                                hotwords="Fabrica Cypher Ragnarok Duskweaver Masks",
+                                            )
 
+
+            
             for segment in segments:
                 all_segments.append({"start": segment.start,
                                     "speaker": character_name,
@@ -62,7 +71,11 @@ def run_transcription_pipeline(config):
                 session_date = line.split()[2].split("T")[0]
 
     
-    output_file = os.path.join(output_dir,f"{output_file_name} - {session_date}.txt")
+    
+    final_output_path = Path(output_dir)/f"{output_file_name} - {session_date}"
+    os.makedirs(final_output_path, exist_ok = True)
+    output_file = os.path.join(final_output_path,f"{output_file_name} - {session_date}.txt")
+
 
     with open(output_file, "w", encoding="utf-8") as f:
         for seg in all_segments:

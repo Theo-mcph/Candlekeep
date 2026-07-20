@@ -1,19 +1,19 @@
 {
-    "input_dir":"./recordings/test_session",
+    "input_dir":"./recordings/test_session_2",
     "output_dir":"./transcripts",
-    "output_file_name":"Masks session 23",
+    "output_file_name":"Masks test_session_2",
     "language":"en",
     "model_size":"base",
     "device":"cuda",
-    "initial_prompt":"This is a Dungeons & Dragons session with fantasy names, spells, and game terminology.",
+    "initial_prompt": "This is a session of Masks: A New Generation, a tabletop superhero roleplaying game. Character names include Fabrica, Cypher, Ragnarok, and Duskweaver.",
     "beam_size":5,
     "speaker_mapping":{
 
-        "Topoiso":"Fabrica",
-        "Ghost2309":"Cypher",
-        "Cloud9":"Ragnorok",
-        "Athierus":"Duskweaver",
-        "warren":"DM"
+        "topoiso":"Fabrica",
+        "_ghost2309":"Cypher",
+        "cloud91275":"Ragnorok",
+        "athierus":"Duskweaver",
+        "warren4722":"DM"
 
     }
 
