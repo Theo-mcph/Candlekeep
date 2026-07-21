@@ -7,6 +7,7 @@
     "device":"cuda",
     "initial_prompt": "This is a session of Masks: A New Generation, a tabletop superhero roleplaying game. Character names include Fabrica, Cypher, Ragnarok, and Duskweaver.",
     "beam_size":5,
+    "hotwords": ["Fabrica", "Cypher", "Ragnarok", "Duskweaver", "Masks"],
     "speaker_mapping":{
 
         "topoiso":"Fabrica",
