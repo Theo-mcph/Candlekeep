@@ -2,8 +2,12 @@ import os
 import json
 from faster_whisper import WhisperModel
 from pathlib import Path
+from tqdm import tqdm
 
-with open("config.json","r") as f:
+PROJECT_ROOT = Path(__file__).parent.parent
+CONFIG_PATH = PROJECT_ROOT / "config.json" 
+
+with open(CONFIG_PATH, "r") as f:
     config = json.load(f)
 
 
@@ -11,18 +15,19 @@ def run_transcription_pipeline(config):
 
     
     
-    output_dir = config["output_dir"]
+    output_dir = PROJECT_ROOT / config["output_dir"]
     output_file_name =config["output_file_name"]
     initial_prompt = config["initial_prompt"]
     speaker_mapping =config["speaker_mapping"]
     model_size = config["model_size"]
+    hotwords_list =" ".join(config["hotwords"])
 
     print(f"Loading local Whisper model ({model_size}) onto GPU...")
 
     model = WhisperModel(model_size, device=config["device"], compute_type="float16")
     all_segments = []
 
-    audio_dir =Path(config["input_dir"])
+    audio_dir = PROJECT_ROOT / config["input_dir"]
 
     if not audio_dir.is_dir():
         os.makedirs(audio_dir, exist_ok = True)
@@ -36,7 +41,7 @@ def run_transcription_pipeline(config):
             character_name = speaker_mapping.get(speaker_id, speaker_id)
             
     
-            print(f"Transcribing {file} on your 3060 Ti...")
+            print(f"Transcribing {file}")
 
             segments, info = model.transcribe(
                                                 audio=str(file),
@@ -44,17 +49,23 @@ def run_transcription_pipeline(config):
                                                 initial_prompt=initial_prompt,
                                                 beam_size=config["beam_size"],
                                                 vad_filter=True,
-                                                hotwords="Fabrica Cypher Ragnarok Duskweaver Masks",
+                                                hotwords=hotwords_list,
                                             )
 
+            pbar = tqdm(total=info.duration, unit="sec", desc=f"Transcribing {file.name}", ascii = " ⋆˙⟡⊹₊")
 
             
+
             for segment in segments:
                 all_segments.append({"start": segment.start,
                                     "speaker": character_name,
                                     "text":segment.text.strip()
                                     })
+                elapsed_time = (segment.end - segment.start)
+                pbar.update(elapsed_time)
 
+            pbar.update(pbar.total - pbar.n) 
+            pbar.close()
 
     if not all_segments:
             print("No audio files were found to transcribe.")
@@ -88,8 +99,8 @@ def run_transcription_pipeline(config):
 
             f.write(output_line + "\n")
 
-
-
+    print("\nTranscription complete")
+    print(f"\nfind your transcript here {final_output_path}")
 
 if __name__ == "__main__":
     run_transcription_pipeline(config)
