@@ -15,7 +15,7 @@ def run_transcription_pipeline(config):
 
     
     
-    output_dir = config["output_dir"]
+    output_dir = PROJECT_ROOT / config["output_dir"]
     output_file_name =config["output_file_name"]
     initial_prompt = config["initial_prompt"]
     speaker_mapping =config["speaker_mapping"]
@@ -27,7 +27,7 @@ def run_transcription_pipeline(config):
     model = WhisperModel(model_size, device=config["device"], compute_type="float16")
     all_segments = []
 
-    audio_dir =Path(config["input_dir"])
+    audio_dir = PROJECT_ROOT / config["input_dir"]
 
     if not audio_dir.is_dir():
         os.makedirs(audio_dir, exist_ok = True)
@@ -41,7 +41,7 @@ def run_transcription_pipeline(config):
             character_name = speaker_mapping.get(speaker_id, speaker_id)
             
     
-            print(f"Transcribing {file} on your 3060 Ti...")
+            print(f"Transcribing {file}")
 
             segments, info = model.transcribe(
                                                 audio=str(file),
