@@ -1,5 +1,5 @@
 {
-    "input_dir":"./recordings/test_session_2",
+    "input_dir":"./recordings/bot_test",
     "output_dir":"./transcripts",
     "output_file_name":"Masks test_session_2",
     "language":"en",
