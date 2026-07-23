@@ -1,0 +1,10 @@
+{
+    "model_name": "qwen2.5:7b",
+    "temperature": 0.2,
+    "num_ctx": 16384,
+    "chunk_size_lines": 250,
+    "prompts": {
+        "fantasy": "You are a precise campaign chronicler. Summarize this transcript segment focusing on plot progression, combat highlights, items gained, and quest goals.",
+        "superhero": "You are a story chronicler for a superhero TTRPG. Summarize this transcript segment focusing on character dynamics, emotional conflicts, superhero vs secret identity struggles, and team decisions."
+    }
+}
