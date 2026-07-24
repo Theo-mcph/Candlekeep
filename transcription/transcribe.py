@@ -15,13 +15,14 @@ with open(CONFIG_PATH, "r") as f:
 def run_transcription_pipeline(config):
 
     
-    
-    output_dir = PROJECT_ROOT / config["output_dir"]
+    campaign_name = config["campaign_name"]
+    output_dir = PROJECT_ROOT / config["output_dir"] / config["campaign_name"]
     output_file_name =config["output_file_name"]
     initial_prompt = config["initial_prompt"]
     speaker_mapping =config["speaker_mapping"]
     model_size = config["model_size"]
     hotwords_list =" ".join(config["hotwords"])
+    
 
     print(f"Loading local Whisper model ({model_size}) onto GPU...")
 
@@ -113,9 +114,9 @@ def run_transcription_pipeline(config):
         session_date = "unknown-date"
     
     
-    final_output_path = Path(output_dir)/f"{output_file_name} - {session_date}"
+    final_output_path = Path(output_dir) / f"{campaign_name}-{output_file_name}-{session_date}"
     os.makedirs(final_output_path, exist_ok = True)
-    output_file = os.path.join(final_output_path,f"{output_file_name} - {session_date}.txt")
+    output_file = os.path.join(final_output_path,f"{campaign_name}-{output_file_name}-{session_date}.txt")
 
 
     with open(output_file, "w", encoding="utf-8") as f:

@@ -1,13 +1,14 @@
 {
-    "input_dir":"./recordings/bot_test",
+    "input_dir":"./recordings/test_session_2",
     "output_dir":"./transcripts",
-    "output_file_name":"Masks test_session_2",
+    "output_file_name":"test_session_2",
     "language":"en",
     "model_size":"base",
     "device":"cuda",
     "initial_prompt": "This is a session of Masks: A New Generation, a tabletop superhero roleplaying game. Character names include Fabrica, Cypher, Ragnarok, and Duskweaver.",
     "beam_size":5,
     "hotwords": ["Fabrica", "Cypher", "Ragnarok", "Duskweaver", "Masks"],
+    "campaign_name": "Masks",
     "speaker_mapping":{
 
         "topoiso":"Fabrica",
@@ -16,6 +17,13 @@
         "athierus":"Duskweaver",
         "warren4722":"DM"
 
-    }
+    },
+
+"summarization": {
+    "model": "qwen3.5:9b",
+    "ollama_url": "http://localhost:11434",
+    "input_transcript": "./transcripts/Masks test_session_2 - 2026-07-13/Masks test_session_2 - 2026-07-13.txt",
+    "output_file_name": "Session Summary"
+}
 
 }
