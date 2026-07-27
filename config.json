@@ -20,10 +20,14 @@
     },
 
 "summarization": {
-    "model": "qwen3.5:9b",
+    "model": "candlekeep-summarizer",
     "ollama_url": "http://localhost:11434",
-    "input_transcript": "./transcripts/Masks test_session_2 - 2026-07-13/Masks test_session_2 - 2026-07-13.txt",
-    "output_file_name": "Session Summary"
+    "output_file_name": "Session Summary",
+    "manual_transcript_path": "./transcripts/Masks/Masks - test_session_2 - 2026-07-19/Masks - test_session_2 - 2026-07-19.txt",
+    "initial_prompt": "You are summarizing a segment of a tabletop RPG session transcript. they will be combined into a overall full summary at the end. Provide: 1. A brief recap of what happened 2. Key events or decisions 3. Any NPCs introduced or mentioned 4. Unresolved threads or open questions for next session 5. always make the summary from the perpective of people in universe, ignore any conversations that appear to reference real life or out of game activities such as conversations during breaks",
+    "final_prompt": "You are summarizing segments of a tabletop RPG session transcript. combine each of the segments into an overall summary that flows cleanly from one section to the next in a narrative manner. in addition, also provide seperate bullets points of events."
+
+
 }
 
 }
