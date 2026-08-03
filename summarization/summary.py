@@ -44,15 +44,16 @@ with open(transcript_path, "r", encoding="utf-8") as f:
     transcript_text = f.read()
 
 
-def chunk_transcript(text: str, max_chars: int = 8000) -> list[str]:
+def chunk_transcript(text: str, max_chars: int = 4000) -> list[str]:
     splitter = RecursiveCharacterTextSplitter(
                                             chunk_size=max_chars,
-                                            chunk_overlap=400,
+                                            chunk_overlap=200,
                                             length_function=len,
                                             is_separator_regex=False,)
     chunks = splitter.split_text(text)                                
     
     return chunks
+#just a test 
 
 transcript_segments = chunk_transcript(transcript_text)
 
